@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>सिटी मॉल</title>
+<style>
+body { font-family: 'Noto Sans Devanagari', sans-serif; margin:0; padding:0; background:#f8f8f8;}
+header { background:#ff6600; color:white; padding:15px; text-align:center;}
+nav { background:#333; overflow:hidden;}
+nav a { float:left; display:block; color:white; text-align:center; padding:14px 20px; text-decoration:none;}
+nav a:hover { background:#ff6600;}
+nav a.cart { float:right;}
+section { padding:20px;}
+footer { background:#333; color:white; text-align:center; padding:10px; margin-top:20px;}
+.card { background:white; padding:20px; margin:15px 0; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+.btn { background:#ff6600; color:white; padding:8px 12px; border:none; border-radius:5px; cursor:pointer;}
+.btn:hover { background:#e65c00;}
+.modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6); justify-content:center; align-items:center;}
+.modal-content { background:white; padding:20px; border-radius:10px; width:320px; text-align:center;}
+.modal-content input { width:90%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:5px;}
+.cart-box { position:fixed; right:10px; top:70px; width:300px; max-height:400px; overflow-y:auto; background:white; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.3); padding:15px; display:none; z-index:999;}
+.cart-item { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px;}
+.total { border-top:2px solid #ddd; margin-top:10px; padding-top:10px; text-align:right; font-weight:bold;}
+.order { border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:5px;}
+.status { font-weight:bold; color:green;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>सिटी मॉल में आपका स्वागत है</h1>
+<p>खरीदारी, मनोरंजन और स्वादिष्ट खाने का बेहतरीन स्थान</p>
+</header>
+
+<nav>
+<a href="#home">होम</a>
+<a href="#flash">ऑफ़र</a>
+<a href="#shops">दुकानें</a>
+<a href="#orders">ऑर्डर</a>
+<a href="#contact">संपर्क करें</a>
+<a href="#" id="loginBtn">लॉगिन / रजिस्टर</a>
+<a href="#" class="cart" id="cartBtn">🛒 कार्ट (<span id="cartCount">0</span>)</a>
+</nav>
+
+<!-- Login Modal -->
+<div class="modal" id="loginModal">
+<div class="modal-content">
+<h2>लॉगिन / रजिस्टर</h2>
+<input type="text" id="username" placeholder="यूज़रनेम">
+<input type="password" id="password" placeholder="पासवर्ड">
+<button class="btn" onclick="login()">लॉगिन</button>
+<br><br>
+<button class="btn" onclick="closeModal('loginModal')">बंद करें</button>
+</div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal" id="paymentModal">
+<div class="modal-content">
+<h2>💳 भुगतान करें</h2>
+<input type="text" id="upi" placeholder="UPI ID (example@upi)">
+<input type="text" id="card" placeholder="कार्ड नंबर">
+<input type="text" id="cvv" placeholder="CVV">
+<button class="btn" onclick="makePayment()">Pay Now</button>
+<br><br>
+<button class="btn" onclick="closeModal('paymentModal')">बंद करें</button>
+</div>
+</div>
+
+<!-- Cart Box -->
+<div class="cart-box" id="cartBox">
+<h3>🛒 मेरा कार्ट</h3>
+<div id="cartItems"></div>
+<div class="total">कुल: ₹<span id="totalPrice">0</span></div>
+<button class="btn" onclick="checkout()">Checkout</button>
+</div>
+
+<!-- Flash Sale -->
+<section id="flash">
+<div class="card">
+<h2>🔥 फ़्लैश सेल</h2>
+<div style="display:flex; gap:15px;">
+<div>
+<p>ब्रांडेड जूते</p>
+<p>₹999</p>
+<button class="btn" onclick="addToCart('ब्रांडेड जूते', 999)">कार्ट में डालें</button>
+</div>
+<div>
+<p>स्टाइलिश घड़ी</p>
+<p>₹1499</p>
+<button class="btn" onclick="addToCart('स्टाइलिश घड़ी', 1499)">कार्ट में डालें</button>
+</div>
+<div>
+<p>फैशनेबल टी-शर्ट</p>
+<p>₹499</p>
+<button class="btn" onclick="addToCart('फैशनेबल टी-शर्ट', 499)">कार्ट में डालें</button>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Orders Section -->
+<section id="orders">
+<div class="card">
+<h2>📦 मेरे ऑर्डर</h2>
+<div id="orderList"></div>
+</div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+<div class="card">
+<h2>संपर्क करें</h2>
+<p>📍 पता: सिटी मॉल, मुख्य सड़क, आपका शहर</p>
+<p>📞 फ़ोन: +91 9876543210</p>
+<p>✉️ ईमेल: info@citymall.com</p>
+</div>
+</section>
+
+<footer>
+<p>© 2025 सिटी मॉल | सभी अधिकार सुरक्षित</p>
+</footer>
+
+<script>
+// Modal control
+function closeModal(id){ document.getElementById(id).style.display="none"; }
+const loginModal=document.getElementById("loginModal");
+const paymentModal=document.getElementById("paymentModal");
+document.getElementById("loginBtn").onclick=()=> loginModal.style.display="flex";
+function login(){ alert("लॉगिन सफल ✅"); closeModal('loginModal'); }
+
+// Cart
+let cart=[];
+function addToCart(name,price){
+cart.push({name,price});
+document.getElementById("cartCount").innerText=cart.length;
+updateCart();
+}
+function updateCart(){
+let cartItems=document.getElementById("cartItems");
+let total=0; cartItems.innerHTML="";
+cart.forEach(item=>{
+cartItems.innerHTML+=`<div class="cart-item"><span>${item.name}</span> ₹${item.price}</div>`;
+total+=item.price;
+});
+document.getElementById("totalPrice").innerText=total;
+}
+const cartBtn=document.getElementById("cartBtn");
+const cartBox=document.getElementById("cartBox");
+cartBtn.onclick=()=> cartBox.style.display=cartBox.style.display==="block"?"none":"block";
+
+// Orders
+let orders=[];
+function checkout(){
+if(cart.length===0){ alert("कार्ट खाली है ❌"); return; }
+paymentModal.style.display="flex";
+}
+function makePayment(){
+const upi=document.getElementById("upi").value;
+const card=document.getElementById("card").value;
+if(upi==="" && card===""){ alert("कृपया UPI ID या कार्ड नंबर डालें ❌"); return; }
+alert("✅ भुगतान सफल! आपका ऑर्डर कन्फ़र्म हो गया है।");
+
+// Add new order
+let newOrder={ id:Date.now(), items:[...cart], status:"Pending" };
+orders.push(newOrder);
+updateOrders();
+
+cart=[]; updateCart();
+document.getElementById("cartCount").innerText=0;
+closeModal('paymentModal');
+cartBox.style.display="none";
+}
+function updateOrders(){
+let orderList=document.getElementById("orderList");
+orderList.innerHTML="";
+orders.forEach(order=>{
+orderList.innerHTML+=`
+<div class="order">
+<p><b>ऑर्डर ID:</b> ${order.id}</p>
+<p><b>सामान:</b> ${order.items.map(i=>i.name).join(", ")}</p>
+<p><b>स्थिति:</b> <span class="status">${order.status}</span></p>
+<button class="btn" onclick="changeStatus(${order.id})">स्टेटस बदलें</button>
+</div>
+`;
+});
+}
+function changeStatus(id){
+let order=orders.find(o=>o.id===id);
+if(order.status==="Pending") order.status="Shipped";
+else if(order.status==="Shipped") order.status="Delivered";
+else alert("✅ यह ऑर्डर पहले ही डिलीवर हो चुका है।");
+updateOrders();
+}
+</script>
+
+</body>
+</html>
